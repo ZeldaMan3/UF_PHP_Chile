@@ -1,35 +1,33 @@
 <?php
-// URL del feed RSS que deseas mostrar
-$rss_url = "https://zeus.sii.cl/admin/rss/sii_ind_rss.xml";
+$rssUrl = 'https://zeus.sii.cl/admin/rss/sii_ind_rss.xml';
 
-// Obtener el contenido del feed RSS
-$rss_content = file_get_contents($rss_url);
+function renderMessage(string $message): void
+{
+    echo '<p>' . htmlspecialchars($message, ENT_QUOTES, 'UTF-8') . '</p>';
+}
 
-// Procesar el contenido XML
-$xml = simplexml_load_string($rss_content);
+$rssContent = @file_get_contents($rssUrl);
 
-// Verificar si el feed se procesó correctamente
-if ($xml) {
-    // Verificar si existen elementos "item" en el feed
-    if (isset($xml->channel->item[0])) {
-        // Obtener el título y el enlace de la primera noticia
-        $titulo = $xml->channel->item[0]->title;
-        $valordolar = $xml->channel->item[0]->description;
+if ($rssContent === false) {
+    renderMessage('No se pudo obtener el feed RSS del SII.');
+    exit;
+}
 
-        $titulouf = $xml->channel->item[1]->title;
-        $valoruf = $xml->channel->item[1]->description;
+$xml = @simplexml_load_string($rssContent);
 
-        // Mostrar el título y el enlace
-        echo "<h2>$titulo</h2>";
+if ($xml === false || !isset($xml->channel->item[0])) {
+    renderMessage('No se pudo procesar el feed RSS.');
+    exit;
+}
 
-        echo "<h2>$valordolar</h2>";
-        echo "<h2>$titulouf</h2>";
-        echo "<h2>$valoruf</h2>";
+$items = $xml->channel->item;
+$maxItems = min(2, count($items));
 
-    } else {
-        echo "No se encontraron noticias en el feed RSS.";
-    }
-} else {
-    echo "No se pudo procesar el feed RSS.";
+for ($i = 0; $i < $maxItems; $i++) {
+    $title = (string) $items[$i]->title;
+    $description = (string) $items[$i]->description;
+
+    echo '<h2>' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '</h2>';
+    echo '<p>' . htmlspecialchars($description, ENT_QUOTES, 'UTF-8') . '</p>';
 }
 ?>
